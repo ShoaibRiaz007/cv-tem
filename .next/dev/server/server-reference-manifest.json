@@ -1,0 +1,21 @@
+{
+  "node": {
+    "403a7d96f112358678226a1fee240fe7d2bd328930": {
+      "workers": {
+        "app/page": {
+          "moduleId": "[project]/cv-tem/.next-internal/server/app/page/actions.js { ACTIONS_MODULE0 => \"[project]/cv-tem/src/lib/emailjs.ts [app-rsc] (ecmascript)\" } [app-rsc] (server actions loader, ecmascript)",
+          "async": false,
+          "exportedName": "sendContactEmail",
+          "filename": "cv-tem/src/lib/emailjs.ts"
+        }
+      },
+      "layer": {
+        "app/page": "action-browser"
+      },
+      "filename": "cv-tem/src/lib/emailjs.ts",
+      "exportedName": "sendContactEmail"
+    }
+  },
+  "edge": {},
+  "encryptionKey": "TJhpZxopd9stdtKLMfj0gGWEmPvbgjAdMcNlecDVRh0="
+}

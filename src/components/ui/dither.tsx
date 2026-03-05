@@ -1,268 +1,142 @@
 "use client";
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { EffectComposer, wrapEffect } from "@react-three/postprocessing";
-import { Effect } from "postprocessing";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 
-interface RetroEffectOptions {
-  colorNum?: number;
-  pixelSize?: number;
-}
-
-interface DitheredWavesProps {
+interface LowPolyTerrainProps {
   waveSpeed: number;
-  waveFrequency: number;
   waveAmplitude: number;
-  waveColor: [number, number, number];
-  colorNum: number;
-  pixelSize: number;
+  colorA: string;
+  colorB: string;
   disableAnimation: boolean;
+  scrollOffset: number;
 }
 
-const waveVertexShader = `
-precision highp float;
-varying vec2 vUv;
-void main() {
-  vUv = uv;
-  vec4 modelPosition = modelMatrix * vec4(position, 1.0);
-  vec4 viewPosition = viewMatrix * modelPosition;
-  gl_Position = projectionMatrix * viewPosition;
-}
-`;
-
-const waveFragmentShader = `
-precision highp float;
-uniform vec2 resolution;
-uniform float time;
-uniform float waveSpeed;
-uniform float waveFrequency;
-uniform float waveAmplitude;
-uniform vec3 waveColor;
-
-vec4 mod289(vec4 x) { return x - floor(x * (1.0/289.0)) * 289.0; }
-vec4 permute(vec4 x) { return mod289(((x * 34.0) + 1.0) * x); }
-vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
-vec2 fade(vec2 t) { return t*t*t*(t*(t*6.0-15.0)+10.0); }
-
-float cnoise(vec2 P) {
-  vec4 Pi = floor(P.xyxy) + vec4(0.0,0.0,1.0,1.0);
-  vec4 Pf = fract(P.xyxy) - vec4(0.0,0.0,1.0,1.0);
-  Pi = mod289(Pi);
-  vec4 ix = Pi.xzxz;
-  vec4 iy = Pi.yyww;
-  vec4 fx = Pf.xzxz;
-  vec4 fy = Pf.yyww;
-  vec4 i = permute(permute(ix) + iy);
-  vec4 gx = fract(i * (1.0/41.0)) * 2.0 - 1.0;
-  vec4 gy = abs(gx) - 0.5;
-  vec4 tx = floor(gx + 0.5);
-  gx = gx - tx;
-  vec2 g00 = vec2(gx.x, gy.x);
-  vec2 g10 = vec2(gx.y, gy.y);
-  vec2 g01 = vec2(gx.z, gy.z);
-  vec2 g11 = vec2(gx.w, gy.w);
-  vec4 norm = taylorInvSqrt(vec4(dot(g00,g00), dot(g01,g01), dot(g10,g10), dot(g11,g11)));
-  g00 *= norm.x; g01 *= norm.y; g10 *= norm.z; g11 *= norm.w;
-  float n00 = dot(g00, vec2(fx.x, fy.x));
-  float n10 = dot(g10, vec2(fx.y, fy.y));
-  float n01 = dot(g01, vec2(fx.z, fy.z));
-  float n11 = dot(g11, vec2(fx.w, fy.w));
-  vec2 fade_xy = fade(Pf.xy);
-  vec2 n_x = mix(vec2(n00, n01), vec2(n10, n11), fade_xy.x);
-  return 2.3 * mix(n_x.x, n_x.y, fade_xy.y);
-}
-
-const int OCTAVES = 4;
-float fbm(vec2 p) {
-  float value = 0.0;
-  float amp = 1.0;
-  float freq = waveFrequency;
-  for (int i = 0; i < OCTAVES; i++) {
-    value += amp * abs(cnoise(p));
-    p *= freq;
-    amp *= waveAmplitude;
-  }
-  return value;
-}
-
-float pattern(vec2 p) {
-  vec2 p2 = p - time * waveSpeed;
-  return fbm(p + fbm(p2)); 
-}
-
-void main() {
-  vec2 uv = gl_FragCoord.xy / resolution.xy;
-  uv -= 0.5;
-  uv.x *= resolution.x / resolution.y;
-  float f = pattern(uv);
-  vec3 col = mix(vec3(0.0), waveColor, f);
-  gl_FragColor = vec4(col, 1.0);
-}
-`;
-
-const ditherFragmentShader = `
-precision highp float;
-uniform float colorNum;
-uniform float pixelSize;
-const float bayerMatrix8x8[64] = float[64](
-  0.0/64.0, 48.0/64.0, 12.0/64.0, 60.0/64.0,  3.0/64.0, 51.0/64.0, 15.0/64.0, 63.0/64.0,
-  32.0/64.0,16.0/64.0, 44.0/64.0, 28.0/64.0, 35.0/64.0,19.0/64.0, 47.0/64.0, 31.0/64.0,
-  8.0/64.0, 56.0/64.0,  4.0/64.0, 52.0/64.0, 11.0/64.0,59.0/64.0,  7.0/64.0, 55.0/64.0,
-  40.0/64.0,24.0/64.0, 36.0/64.0, 20.0/64.0, 43.0/64.0,27.0/64.0, 39.0/64.0, 23.0/64.0,
-  2.0/64.0, 50.0/64.0, 14.0/64.0, 62.0/64.0,  1.0/64.0,49.0/64.0, 13.0/64.0, 61.0/64.0,
-  34.0/64.0,18.0/64.0, 46.0/64.0, 30.0/64.0, 33.0/64.0,17.0/64.0, 45.0/64.0, 29.0/64.0,
-  10.0/64.0,58.0/64.0,  6.0/64.0, 54.0/64.0,  9.0/64.0,57.0/64.0,  5.0/64.0, 53.0/64.0,
-  42.0/64.0,26.0/64.0, 38.0/64.0, 22.0/64.0, 41.0/64.0,25.0/64.0, 37.0/64.0, 21.0/64.0
-);
-
-vec3 dither(vec2 uv, vec3 color) {
-  vec2 scaledCoord = floor(uv * resolution / pixelSize);
-  int x = int(mod(scaledCoord.x, 8.0));
-  int y = int(mod(scaledCoord.y, 8.0));
-  float threshold = bayerMatrix8x8[y * 8 + x] - 0.25;
-  float step = 1.0 / (colorNum - 1.0);
-  color += threshold * step;
-  float bias = 0.2;
-  color = clamp(color - bias, 0.0, 1.0);
-  return floor(color * (colorNum - 1.0) + 0.5) / (colorNum - 1.0);
-}
-
-void mainImage(in vec4 inputColor, in vec2 uv, out vec4 outputColor) {
-  vec2 normalizedPixelSize = pixelSize / resolution;
-  vec2 uvPixel = normalizedPixelSize * floor(uv / normalizedPixelSize);
-  vec4 color = texture2D(inputBuffer, uvPixel);
-  color.rgb = dither(uv, color.rgb);
-  outputColor = color;
-}
-`;
-
-class RetroEffectImpl extends Effect {
-  constructor(options: RetroEffectOptions = {}) {
-    const colorNum = options.colorNum ?? 4.0;
-    const pixelSize = options.pixelSize ?? 2.0;
-    const uniforms = new Map([
-      ["colorNum", new THREE.Uniform(colorNum)],
-      ["pixelSize", new THREE.Uniform(pixelSize)],
-    ]);
-    super("RetroEffect", ditherFragmentShader, { uniforms });
-  }
-  set colorNum(v: number) {
-    const u = this.uniforms.get("colorNum");
-    if (u) u.value = v;
-  }
-  get colorNum(): number {
-    const u = this.uniforms.get("colorNum");
-    return u?.value ?? 4.0;
-  }
-  set pixelSize(v: number) {
-    const u = this.uniforms.get("pixelSize");
-    if (u) u.value = v;
-  }
-  get pixelSize(): number {
-    const u = this.uniforms.get("pixelSize");
-    return u?.value ?? 2.0;
-  }
-}
-
-const RetroEffect = wrapEffect(RetroEffectImpl, {
-  colorNum: 4,
-  pixelSize: 2,
-});
-
-function DitheredWaves({
+function LowPolyTerrain({
   waveSpeed,
-  waveFrequency,
   waveAmplitude,
-  waveColor,
-  colorNum,
-  pixelSize,
+  colorA,
+  colorB,
   disableAnimation,
-}: DitheredWavesProps) {
-  const mesh = useRef(null);
-  const { viewport, size, gl } = useThree();
+  scrollOffset,
+}: LowPolyTerrainProps) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const { viewport } = useThree();
+  const smoothedScroll = useRef(0);
 
-  const waveUniformsRef = useRef({
-    time: new THREE.Uniform(0),
-    resolution: new THREE.Uniform(new THREE.Vector2(0, 0)),
-    waveSpeed: new THREE.Uniform(waveSpeed),
-    waveFrequency: new THREE.Uniform(waveFrequency),
-    waveAmplitude: new THREE.Uniform(waveAmplitude),
-    waveColor: new THREE.Uniform(new THREE.Color(...waveColor)),
-  });
+  const { geometry, basePositions } = useMemo(() => {
+    const aspect = viewport.width / viewport.height;
+    const segsX = Math.round(48 * Math.min(aspect, 2));
+    const segsY = 32;
+    const geo = new THREE.PlaneGeometry(
+      viewport.width * 1.2,
+      viewport.height * 1.2,
+      segsX,
+      segsY,
+    );
 
-  useEffect(() => {
-    const dpr = gl.getPixelRatio();
-    const w = Math.floor(size.width * dpr),
-      h = Math.floor(size.height * dpr);
-    const res = waveUniformsRef.current.resolution.value;
-    if (res.x !== w || res.y !== h) {
-      res.set(w, h);
+    const pos = geo.attributes.position;
+    const basePos = new Float32Array(pos.count * 3);
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i);
+      const y = pos.getY(i);
+      const z = (Math.random() - 0.5) * waveAmplitude * 2;
+      pos.setZ(i, z);
+      basePos[i * 3] = x;
+      basePos[i * 3 + 1] = y;
+      basePos[i * 3 + 2] = z;
     }
-  }, [size, gl]);
 
-  const prevColor = useRef([...waveColor]);
+    const colA = new THREE.Color(colorA);
+    const colB = new THREE.Color(colorB);
+    const colors = new Float32Array(pos.count * 3);
+    const halfH = viewport.height * 0.6;
+    for (let i = 0; i < pos.count; i++) {
+      const y = pos.getY(i);
+      const z = pos.getZ(i);
+      const t = THREE.MathUtils.clamp((y + halfH) / (halfH * 2), 0, 1);
+      const zInfluence = THREE.MathUtils.clamp(
+        (z + waveAmplitude) / (waveAmplitude * 2),
+        0,
+        1,
+      );
+      const blend = t * 0.7 + zInfluence * 0.3;
+      const col = colA.clone().lerp(colB, blend);
+      colors[i * 3] = col.r;
+      colors[i * 3 + 1] = col.g;
+      colors[i * 3 + 2] = col.b;
+    }
+    geo.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+
+    geo.computeVertexNormals();
+    pos.needsUpdate = true;
+
+    return { geometry: geo, basePositions: basePos };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [viewport.width, viewport.height]);
+
   useFrame(({ clock }) => {
-    const u = waveUniformsRef.current;
+    if (disableAnimation || !meshRef.current) return;
 
-    if (!disableAnimation) {
-      u.time.value = clock.getElapsedTime();
+    smoothedScroll.current += (scrollOffset - smoothedScroll.current) * 0.05;
+    const parallaxRotation = smoothedScroll.current * 0.1;
+    meshRef.current.rotation.set(
+      -0.5 + parallaxRotation * 0.3,
+      parallaxRotation * 0.15,
+      0,
+    );
+
+    const t = clock.getElapsedTime() * waveSpeed;
+    const pos = meshRef.current.geometry.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      const bx = basePositions[i * 3];
+      const by = basePositions[i * 3 + 1];
+      const bz = basePositions[i * 3 + 2];
+      pos.setZ(
+        i,
+        bz +
+          Math.sin(bx * 0.8 + t) * waveAmplitude * 0.3 +
+          Math.cos(by * 0.6 + t * 0.7) * waveAmplitude * 0.2,
+      );
     }
-
-    if (u.waveSpeed.value !== waveSpeed) u.waveSpeed.value = waveSpeed;
-    if (u.waveFrequency.value !== waveFrequency)
-      u.waveFrequency.value = waveFrequency;
-    if (u.waveAmplitude.value !== waveAmplitude)
-      u.waveAmplitude.value = waveAmplitude;
-
-    if (!prevColor.current.every((v, i) => v === waveColor[i])) {
-      u.waveColor.value.set(...waveColor);
-      prevColor.current = [...waveColor];
-    }
+    pos.needsUpdate = true;
+    meshRef.current.geometry.computeVertexNormals();
   });
 
   return (
-    <>
-      <mesh ref={mesh} scale={[viewport.width, viewport.height, 1]}>
-        <planeGeometry args={[1, 1]} />
-        <shaderMaterial
-          vertexShader={waveVertexShader}
-          fragmentShader={waveFragmentShader}
-          uniforms={waveUniformsRef.current}
-        />
-      </mesh>
-
-      <EffectComposer>
-        <RetroEffect colorNum={colorNum} pixelSize={pixelSize} />
-      </EffectComposer>
-    </>
+    <mesh ref={meshRef} geometry={geometry} rotation={[-0.5, 0, 0]}>
+      <meshStandardMaterial
+        vertexColors
+        flatShading
+        side={THREE.DoubleSide}
+        roughness={0.8}
+        metalness={0.2}
+      />
+    </mesh>
   );
 }
 
 interface DitherProps {
   waveSpeed?: number;
-  waveFrequency?: number;
   waveAmplitude?: number;
-  waveColor?: [number, number, number];
-  colorNum?: number;
-  pixelSize?: number;
+  colorA?: string;
+  colorB?: string;
   disableAnimation?: boolean;
 }
 
 export default function Dither({
-  waveSpeed = 0.05,
-  waveFrequency = 3,
-  waveAmplitude = 0.3,
-  waveColor = [0.5, 0.5, 0.5] as [number, number, number],
-  colorNum = 4,
-  pixelSize = 2,
+  waveSpeed = 0.5,
+  waveAmplitude = 0.6,
+  colorA = "#0a0515",
+  colorB = "#a855f7",
   disableAnimation = false,
 }: DitherProps = {}) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [isInView, setIsInView] = useState(true);
   const [isDocumentVisible, setIsDocumentVisible] = useState(true);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [scrollOffset, setScrollOffset] = useState(0);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -294,6 +168,21 @@ export default function Dither({
     return () => observer.disconnect();
   }, []);
 
+  const handleScroll = useCallback(() => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const viewH = window.innerHeight;
+    const progress = 1 - (rect.top + rect.height) / (viewH + rect.height);
+    setScrollOffset(THREE.MathUtils.clamp(progress, 0, 1));
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || prefersReducedMotion) return;
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [handleScroll, prefersReducedMotion]);
+
   const canAnimate =
     !disableAnimation && isInView && isDocumentVisible && !prefersReducedMotion;
 
@@ -301,7 +190,7 @@ export default function Dither({
     <div ref={containerRef} className="dither-container invert dark:invert-0">
       <Canvas
         className="h-full w-full"
-        camera={{ position: [0, 0, 6] }}
+        camera={{ position: [0, 2, 5], fov: 60 }}
         dpr={[1, 1.25]}
         frameloop={canAnimate ? "always" : "never"}
         gl={{
@@ -310,14 +199,20 @@ export default function Dither({
           powerPreference: "low-power",
         }}
       >
-        <DitheredWaves
+        <ambientLight intensity={0.3} />
+        <directionalLight position={[5, 5, 5]} intensity={0.8} />
+        <directionalLight
+          position={[-3, 2, -2]}
+          intensity={0.3}
+          color="#7c3aed"
+        />
+        <LowPolyTerrain
           waveSpeed={waveSpeed}
-          waveFrequency={waveFrequency}
           waveAmplitude={waveAmplitude}
-          waveColor={waveColor}
-          colorNum={colorNum}
-          pixelSize={pixelSize}
+          colorA={colorA}
+          colorB={colorB}
           disableAnimation={!canAnimate}
+          scrollOffset={scrollOffset}
         />
       </Canvas>
     </div>

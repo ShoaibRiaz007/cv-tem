@@ -20,6 +20,18 @@ type Project = projects;
 
 export const revalidate = 3600;
 
+function convertToEmbed(url: string): string {
+  const ytMatch = url.match(
+    /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/,
+  );
+  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}`;
+
+  const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+  if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+
+  return url;
+}
+
 function CaseStudySection({
   title,
   children,
@@ -30,11 +42,14 @@ function CaseStudySection({
   className?: string;
 }) {
   return (
-    <section className={cn("p-5 border-b last:border-b-0", className)}>
-      <h2 className="font-mono text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">
-        {title}
+    <section className={cn("p-5 border-b border-purple-500/10 last:border-b-0", className)}>
+      <h2 className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-purple-400 mb-1">
+        Case Study
       </h2>
-      <div className="font-mono text-sm leading-relaxed text-foreground space-y-3">
+      <h3 className="font-mono text-sm font-light uppercase tracking-wider text-muted-foreground mb-4">
+        {title}
+      </h3>
+      <div className="text-sm leading-relaxed text-muted-foreground space-y-3">
         {children}
       </div>
     </section>
@@ -72,7 +87,7 @@ function TagList({ items }: { items: string[] }) {
       {items.map((item) => (
         <span
           key={item}
-          className="rounded-md border border-border bg-muted/50 px-2.5 py-1 font-mono text-xs text-muted-foreground"
+          className="rounded-full border border-purple-500/20 bg-purple-500/10 px-3 py-1 text-xs text-purple-300/80"
         >
           {item}
         </span>
@@ -132,7 +147,7 @@ export async function generateMetadata({
             },
           ]
         : undefined,
-      siteName: "Mushood Hanif",
+      siteName: "Shoaib Riaz",
     },
     twitter: {
       card: "summary_large_image",
@@ -196,7 +211,7 @@ export default async function ProjectCaseStudyPage({
             "@type": "ListItem",
             position: 2,
             name: "Projects",
-            item: `${SITE_URL}/#projects`,
+            item: `${SITE_URL}/projects`,
           },
           {
             "@type": "ListItem",
@@ -234,6 +249,8 @@ export default async function ProjectCaseStudyPage({
       <script type="application/ld+json">
         {safeJsonLdStringify(projectJsonLd)}
       </script>
+
+      {/* Cover Image */}
       <MaxWidthWrapper parentBorder="border-none">
         <header className="relative w-full">
           <Image
@@ -246,12 +263,17 @@ export default async function ProjectCaseStudyPage({
           />
         </header>
       </MaxWidthWrapper>
-      <MaxWidthWrapper parentBorder="border-y">
+
+      {/* Title Block */}
+      <MaxWidthWrapper parentBorder="border-y" className="border-purple-500/10">
         <div className="mx-auto max-w-3xl border-0 p-5 w-full flex flex-col items-center justify-center">
-          <h1 className="w-full text-left font-mono text-2xl font-bold tracking-tight text-foreground md:text-4xl">
+          <p className="w-full text-left font-mono text-xs font-semibold uppercase tracking-[0.2em] text-purple-400">
+            Project
+          </p>
+          <h1 className="mt-1 w-full text-left font-display text-4xl md:text-5xl font-bold gradient-text">
             {project.title}
           </h1>
-          <p className="mt-2 w-full text-left font-mono text-sm text-muted-foreground md:text-lg">
+          <p className="mt-2 w-full text-left text-xl text-muted-foreground">
             {project.tagline}
           </p>
           {metaItems.length > 0 && (
@@ -261,17 +283,67 @@ export default async function ProjectCaseStudyPage({
           )}
         </div>
       </MaxWidthWrapper>
+
       <DitherSplitter />
-      <MaxWidthWrapper parentBorder="border-b" showPlusIcons={true}>
+
+      {/* Back Link */}
+      <MaxWidthWrapper parentBorder="border-b" className="border-purple-500/10" showPlusIcons={true}>
         <div className="mx-auto max-w-3xl border-0 p-5 flex items-center justify-start">
           <Link
-            href="/#projects"
-            className="inline-flex items-center font-mono text-sm text-muted-foreground hover:text-foreground transition-colors"
+            href="/projects"
+            className="inline-flex items-center text-sm text-purple-400 hover:text-purple-300 transition-colors"
           >
             <ArrowLeft className="size-4 mr-2.5" /> Back to projects
           </Link>
         </div>
       </MaxWidthWrapper>
+
+      {/* Video Section */}
+      {project.videoUrl && (
+        <MaxWidthWrapper parentBorder="border-b" className="border-purple-500/10">
+          <div className="mx-auto max-w-3xl border-0 p-5">
+            <h2 className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-purple-400 mb-1">
+              Media
+            </h2>
+            <h3 className="font-mono text-sm font-light uppercase tracking-wider text-muted-foreground mb-4">
+              Video
+            </h3>
+            <div className="aspect-video w-full rounded-xl border border-purple-500/20 overflow-hidden glow-sm">
+              <iframe
+                src={convertToEmbed(project.videoUrl)}
+                className="w-full h-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+                title={`${project.title} video`}
+              />
+            </div>
+          </div>
+        </MaxWidthWrapper>
+      )}
+
+      {/* WebGL Demo */}
+      {project.webglUrl && (
+        <MaxWidthWrapper parentBorder="border-b" className="border-purple-500/10">
+          <div className="mx-auto max-w-3xl border-0 p-5">
+            <h2 className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-purple-400 mb-1">
+              Interactive
+            </h2>
+            <h3 className="font-mono text-sm font-light uppercase tracking-wider text-muted-foreground mb-4">
+              Playable Demo
+            </h3>
+            <div className="aspect-video w-full rounded-xl border border-purple-500/20 overflow-hidden glow-md">
+              <iframe
+                src={project.webglUrl}
+                className="w-full h-full border-0"
+                allowFullScreen
+                title={`${project.title} playable demo`}
+              />
+            </div>
+          </div>
+        </MaxWidthWrapper>
+      )}
+
+      {/* Case Study */}
       <MaxWidthWrapper parentBorder="border-none">
         <div className="mx-auto max-w-3xl border-0">
           <CaseStudySection title="Problem">
@@ -303,13 +375,18 @@ export default async function ProjectCaseStudyPage({
           <CaseStudySection title="Solution">
             <Paragraphs text={project.solution} />
           </CaseStudySection>
-          <CaseStudySection title="Measurable impact">
+          <CaseStudySection title="Measurable Impact">
             <Paragraphs text={project.measurableImpact} />
           </CaseStudySection>
-          <section className="border-b border-border p-5">
-            <h2 className="font-mono text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">
-              Tech & infrastructure
+
+          {/* Tech & Infrastructure */}
+          <section className="border-b border-purple-500/10 p-5">
+            <h2 className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-purple-400 mb-1">
+              Stack
             </h2>
+            <h3 className="font-mono text-sm font-light uppercase tracking-wider text-muted-foreground mb-4">
+              Tech & Infrastructure
+            </h3>
             <div className="space-y-4">
               {project.techStack?.length > 0 && (
                 <div>
@@ -337,49 +414,52 @@ export default async function ProjectCaseStudyPage({
               )}
             </div>
           </section>
+
+          {/* Links */}
           {(project.demoUrl || project.repositoryUrl) && (
-            <section className="w-full flex flex-col items-center justify-center p-5 gap-2.5">
+            <section className="w-full flex flex-wrap items-center justify-center p-5 gap-3 border-b border-purple-500/10">
               {project.demoUrl && (
-                <div className="w-full flex items-center justify-center gap-2.5">
+                <Link
+                  href={project.demoUrl}
+                  className="gradient-btn inline-flex items-center gap-2 text-sm"
+                >
                   <Earth className="size-4" />
-                  <Link
-                    href={project.demoUrl}
-                    className="flex-1 text-left text-sm text-blue-300"
-                  >
-                    {project.demoUrl}
-                  </Link>
-                </div>
+                  Live Demo
+                </Link>
               )}
               {project.repositoryUrl && (
-                <div className="w-full flex items-center justify-center gap-2.5">
+                <Link
+                  href={project.repositoryUrl}
+                  className="gradient-btn inline-flex items-center gap-2 text-sm"
+                >
                   <Github className="size-4" />
-                  <Link
-                    href={project.repositoryUrl}
-                    className="flex-1 text-left text-sm text-blue-300"
-                  >
-                    {project.repositoryUrl}
-                  </Link>
-                </div>
+                  Repository
+                </Link>
               )}
             </section>
           )}
+
+          {/* Gallery Carousel */}
           {project.galleryImages?.length > 0 && (
-            <section className="border-y border-border p-5">
-              <h2 className="font-mono text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-4">
-                Gallery
+            <section className="border-b border-purple-500/10 p-5">
+              <h2 className="font-mono text-xs font-semibold uppercase tracking-[0.2em] text-purple-400 mb-1">
+                Visuals
               </h2>
-              <div className="grid gap-4 sm:grid-cols-2">
+              <h3 className="font-mono text-sm font-light uppercase tracking-wider text-muted-foreground mb-4">
+                Gallery
+              </h3>
+              <div className="flex gap-4 overflow-x-auto snap-x snap-mandatory pb-4 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border">
                 {project.galleryImages.map((src) => (
                   <div
                     key={src}
-                    className="relative aspect-video overflow-hidden rounded-lg border border-border bg-muted"
+                    className="relative aspect-video min-w-[80%] sm:min-w-[60%] snap-center shrink-0 overflow-hidden rounded-lg border border-purple-500/10 bg-muted"
                   >
                     <Image
                       src={src}
                       alt={`${project.title} screenshot`}
                       fill
                       className="object-cover"
-                      sizes="(max-width: 640px) 100vw, 50vw"
+                      sizes="80vw"
                     />
                   </div>
                 ))}
@@ -388,6 +468,7 @@ export default async function ProjectCaseStudyPage({
           )}
         </div>
       </MaxWidthWrapper>
+
       <DitherSplitter />
     </article>
   );

@@ -1,6 +1,9 @@
 import Contact from "@/components/global/contact";
 import DitherSplitter from "@/components/global/dither-splitter";
 import About from "@/components/landing/about";
+import Companies from "@/components/landing/companies";
+import Education from "@/components/landing/education";
+import Experience from "@/components/landing/experience";
 import Hero from "@/components/landing/hero";
 import Projects from "@/components/landing/projects";
 import Services from "@/components/landing/services";
@@ -21,9 +24,9 @@ const Home = () => {
     "@type": "WebPage",
     "@id": `${SITE_URL}#webpage`,
     url: SITE_URL,
-    name: "Mushood Hanif | Founder and Builder",
+    name: "Shoaib Riaz | Senior Game Engineer",
     description:
-      "Founder and Builder specializing in scalable SaaS platforms, AI-powered automation systems, Next.js, Node.js, and high-performance product engineering.",
+      "Senior Game Engineer specializing in Unity, Unreal Engine, immersive gaming experiences, AR/VR, and cross-platform game development.",
     inLanguage: "en-US",
     isPartOf: {
       "@id": WEBSITE_SCHEMA_ID,
@@ -39,13 +42,16 @@ const Home = () => {
         {safeJsonLdStringify(homePageJsonLd)}
       </script>
       <Hero />
-      <Services />
+      <Companies />
+      <Experience />
       <DitherSplitter />
       <Projects />
-      <Testimonials />
+      <Services />
       <DitherSplitter />
-      <About />
+      <Testimonials />
       <Skills />
+      <Education />
+      <About />
       <Contact />
     </>
   );

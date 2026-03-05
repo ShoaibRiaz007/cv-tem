@@ -16,7 +16,7 @@ const MaxWidthWrapper = ({
 }: MaxWidthWrapperProps) => {
   return (
     <div className={cn("w-full px-5 lg:px-0", parentBorder, className)}>
-      <div className="w-full max-w-3xl mx-auto border-x relative">
+      <div className="w-full max-w-5xl mx-auto border-x relative">
         {showPlusIcons &&
           (parentBorder === "border-y" || parentBorder === "border-t") && (
             <>

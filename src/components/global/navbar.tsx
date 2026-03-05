@@ -23,7 +23,7 @@ const Navbar = () => {
     <MaxWidthWrapper
       showPlusIcons={false}
       parentBorder="border-b"
-      className="sticky top-0 z-50 bg-background/10 backdrop-blur-md"
+      className="sticky top-0 z-50 bg-background/5 backdrop-blur-xl border-purple-500/10"
     >
       <nav className="flex w-full items-center justify-center p-4 md:p-5">
         <Link href="/" className="flex shrink-0" aria-label="Home">
@@ -40,7 +40,7 @@ const Navbar = () => {
             <Link
               key={label}
               href={href}
-              className="rounded-full px-4 py-1 transition-all duration-300 hover:bg-muted hover:font-medium"
+              className="rounded-full px-4 py-1 transition-all duration-300 hover:text-purple-400"
             >
               {label}
             </Link>
@@ -73,7 +73,7 @@ const Navbar = () => {
                   <Link
                     key={label}
                     href={href}
-                    className="w-full p-4 border-b last:border-b-0 text-sm font-medium transition-all duration-300 hover:bg-muted"
+                    className="w-full p-4 border-b border-purple-500/10 last:border-b-0 text-sm font-medium transition-all duration-300 hover:text-purple-400"
                     onClick={() => setSheetOpen(false)}
                   >
                     {label}

@@ -11,8 +11,7 @@ function TestimonialCard({ testimonial }: { testimonial: testimonials }) {
   return (
     <article
       className={cn(
-        "flex min-w-[320px] max-w-[360px] shrink-0 flex-col rounded-xl border border-border bg-card p-5 shadow-sm",
-        "transition-shadow duration-200 hover:shadow-md",
+        "flex min-w-[320px] max-w-[360px] shrink-0 flex-col rounded-xl glass-card p-5",
       )}
     >
       <div className="mb-4 flex items-center gap-3 border-b border-border/80 pb-4">
@@ -57,9 +56,10 @@ const Testimonials = async () => {
 
   return (
     <MaxWidthWrapper parentBorder="border-b">
-      <h2 className="text-2xl font-semibold tracking-tight p-5 text-left w-full border-b font-mono">
-        Testimonials
-      </h2>
+      <div className="flex flex-col gap-2 p-6 border-b border-purple-500/10">
+        <span className="text-xs font-semibold uppercase tracking-[4px] text-purple-400">Client Feedback</span>
+        <h2 className="font-display text-3xl font-bold gradient-text">Testimonials</h2>
+      </div>
       <div
         id="testimonials"
         className="relative flex w-full flex-col items-center justify-center overflow-hidden p-5"

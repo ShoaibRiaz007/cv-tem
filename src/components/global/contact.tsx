@@ -5,7 +5,6 @@ import { Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldError,
@@ -63,72 +62,81 @@ const Contact = () => {
           <Silk
             speed={5}
             scale={1}
-            rotation={0}
-            color="#7B7481"
+            color="#a855f7"
             noiseIntensity={1.5}
           />
         </div>
         <div className="absolute inset-0 w-full max-w-[90%] md:max-w-2/3 mx-auto flex flex-col items-center justify-center py-12 px-4">
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="w-full max-w-md flex flex-col gap-6"
-          >
-            <FieldGroup>
-              <Field data-invalid={!!errors.name}>
-                <FieldLabel htmlFor="contact-name">Name</FieldLabel>
-                <Input
-                  id="contact-name"
-                  type="text"
-                  placeholder="Your name"
-                  autoComplete="name"
-                  aria-invalid={!!errors.name}
-                  className="border-black/25 dark:border-border"
-                  {...register("name")}
-                />
-                <FieldError errors={errors.name ? [errors.name] : undefined} />
-              </Field>
-              <Field data-invalid={!!errors.email}>
-                <FieldLabel htmlFor="contact-email">Email</FieldLabel>
-                <Input
-                  id="contact-email"
-                  type="email"
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                  aria-invalid={!!errors.email}
-                  className="border-black/25 dark:border-border"
-                  {...register("email")}
-                />
-                <FieldError
-                  errors={errors.email ? [errors.email] : undefined}
-                />
-              </Field>
-              <Field data-invalid={!!errors.message}>
-                <FieldLabel htmlFor="contact-message">Message</FieldLabel>
-                <Textarea
-                  id="contact-message"
-                  placeholder="Your message..."
-                  rows={5}
-                  className="min-h-[120px] resize-none border-black/25 dark:border-border"
-                  aria-invalid={!!errors.message}
-                  {...register("message")}
-                />
-                <FieldError
-                  errors={errors.message ? [errors.message] : undefined}
-                />
-              </Field>
-            </FieldGroup>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              aria-busy={isSubmitting}
+          <div className="text-center mb-8 space-y-3">
+            <span className="text-xs font-semibold uppercase tracking-[4px] text-purple-400">Connect</span>
+            <h2 className="font-display text-3xl md:text-4xl font-bold gradient-text">Let&apos;s Build Something Epic</h2>
+            <p className="text-muted-foreground max-w-md mx-auto">
+              Ready to level up? Drop me a message and let&apos;s create something extraordinary.
+            </p>
+          </div>
+          <div className="glass-card rounded-2xl p-6 md:p-8 w-full max-w-md">
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="w-full flex flex-col gap-6"
             >
-              {isSubmitting ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                "Send message"
-              )}
-            </Button>
-          </form>
+              <FieldGroup>
+                <Field data-invalid={!!errors.name}>
+                  <FieldLabel htmlFor="contact-name" className="text-sm font-medium text-muted-foreground">Name</FieldLabel>
+                  <Input
+                    id="contact-name"
+                    type="text"
+                    placeholder="Your name"
+                    autoComplete="name"
+                    aria-invalid={!!errors.name}
+                    className="bg-white/5 border-purple-500/20 text-foreground placeholder:text-muted-foreground/50 focus:border-purple-500/40 focus:shadow-[0_0_15px_rgba(168,85,247,0.1)] focus:ring-1 focus:ring-purple-500/30 rounded-lg transition-all"
+                    {...register("name")}
+                  />
+                  <FieldError errors={errors.name ? [errors.name] : undefined} />
+                </Field>
+                <Field data-invalid={!!errors.email}>
+                  <FieldLabel htmlFor="contact-email" className="text-sm font-medium text-muted-foreground">Email</FieldLabel>
+                  <Input
+                    id="contact-email"
+                    type="email"
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    aria-invalid={!!errors.email}
+                    className="bg-white/5 border-purple-500/20 text-foreground placeholder:text-muted-foreground/50 focus:border-purple-500/40 focus:shadow-[0_0_15px_rgba(168,85,247,0.1)] focus:ring-1 focus:ring-purple-500/30 rounded-lg transition-all"
+                    {...register("email")}
+                  />
+                  <FieldError
+                    errors={errors.email ? [errors.email] : undefined}
+                  />
+                </Field>
+                <Field data-invalid={!!errors.message}>
+                  <FieldLabel htmlFor="contact-message" className="text-sm font-medium text-muted-foreground">Message</FieldLabel>
+                  <Textarea
+                    id="contact-message"
+                    placeholder="Your message..."
+                    rows={5}
+                    className="min-h-[120px] resize-none bg-white/5 border-purple-500/20 text-foreground placeholder:text-muted-foreground/50 focus:border-purple-500/40 focus:shadow-[0_0_15px_rgba(168,85,247,0.1)] focus:ring-1 focus:ring-purple-500/30 rounded-lg transition-all"
+                    aria-invalid={!!errors.message}
+                    {...register("message")}
+                  />
+                  <FieldError
+                    errors={errors.message ? [errors.message] : undefined}
+                  />
+                </Field>
+              </FieldGroup>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                aria-busy={isSubmitting}
+                className="gradient-btn w-full py-3 rounded-full text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="animate-spin mx-auto" />
+                ) : (
+                  "Send message"
+                )}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </MaxWidthWrapper>
